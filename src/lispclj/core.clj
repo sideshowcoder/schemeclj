@@ -11,10 +11,21 @@
                         (s/split #" "))]
     (filter not-empty split-input)))
 
+(defmacro safe
+  [body]
+  `(try ~body (catch Exception e# nil)))
+
+(defn str->int [n] (safe (Integer/parseInt n)))
+
+(defn str->double [n] (safe (Double/parseDouble n)))
+
+
 (defn token->value
   "Parse atom to type."
   [t]
-  t)
+  (or (str->int t)
+      (str->double t)
+      (symbol t)))
 
 (defn read-tokens
   [tokens]
@@ -28,6 +39,13 @@
       (nil? ts) ast
       :true (throw (RuntimeException. (str "Syntax error, unexpected token: " t))))))
 
+(defn parse
+  [input]
+  (-> input
+      (tokenize)
+      (read-tokens)))
 
+;; TODO define environment for functions and lookups of variables
+;; TODO define eval taking in an environment and transforming it according to the ast
 
-(read-tokens '("(" "begin" "(" "define" "r" "10" ")" "(" "*" "pi" "(" "*" "r" "r" ")" ")" ")"))
+(parse "(begin (define r 10) (* pi (* r r)))")
