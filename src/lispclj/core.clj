@@ -43,9 +43,45 @@
   [input]
   (-> input
       (tokenize)
-      (read-tokens)))
+      (read-tokens)
+      first))
 
-;; TODO define environment for functions and lookups of variables
-;; TODO define eval taking in an environment and transforming it according to the ast
+(def lclj-base-env
+  {:+ +
+   :* *
+   :> >
+   :pi java.lang.Math/PI
+   :begin identity})
+
+
+(defn lclj-eval
+  "Eval a expression X in the context of environment ENV, defaults to
+  base-env."
+  ([x] (lclj-eval x lclj-base-env))
+  ([x env]
+   (cond
+     (symbol? x) {:result ((keyword x) env) :env env}
+     (number? x) {:result x :env env}
+     (= 'if (first x)) (let [[_ test t-branch f-branch] x
+                    branch (if (lclj-eval test env) t-branch f-branch)]
+                (lclj-eval branch env))
+     (= 'define (first x)) (let [[_ var exp] x
+                                 {value :result env1 :env} (lclj-eval exp env)]
+                             {:env (assoc env1 (keyword var) value)})
+     :else (let [[proc-sym & raw-args] x
+                 {env1 :env proc :result} (lclj-eval proc-sym env)
+                 {env2 :current-env args :args} (reduce (fn [{current-env :current-env args :args} next-arg]
+                                                             (let [{updated-env :env eval-arg :result} (lclj-eval next-arg current-env)]
+                                                               {:current-env updated-env :args (if (nil? eval-arg) args (conj args eval-arg))}))
+                                                           {:current-env env1 :args []}
+                                                           raw-args)]
+             {:env env2 :result (apply proc args)}))))
 
 (parse "(begin (define r 10) (* pi (* r r)))")
+
+(lclj-eval (parse "(begin (define r 10))"))
+
+(:result (lclj-eval (parse "(begin (define r 10) (* pi (* r r)))")))
+
+(:result (lclj-eval (parse "(+ 1 10)")))
+(lclj-eval (parse "(define r 10)"))
