@@ -46,13 +46,31 @@
       (read-tokens)
       first))
 
+(defn identity-nil
+  ([] nil)
+  ([x] x))
+
 (def lclj-base-env
   {:+ +
    :* *
    :> >
    :pi java.lang.Math/PI
-   :begin identity})
+   :begin identity-nil})
 
+(defn if-token?
+  [x]
+  (= 'if (first x)))
+
+(declare lclj-eval)
+
+(defn if-branch
+  [x env]
+  (let [[_ test t-branch f-branch] x]
+    (if (lclj-eval test env) t-branch f-branch)))
+
+(defn define-token?
+  [x]
+  (= 'define (first x)))
 
 (defn lclj-eval
   "Eval a expression X in the context of environment ENV, defaults to
@@ -62,12 +80,10 @@
    (cond
      (symbol? x) {:result ((keyword x) env) :env env}
      (number? x) {:result x :env env}
-     (= 'if (first x)) (let [[_ test t-branch f-branch] x
-                    branch (if (lclj-eval test env) t-branch f-branch)]
-                (lclj-eval branch env))
-     (= 'define (first x)) (let [[_ var exp] x
-                                 {value :result env1 :env} (lclj-eval exp env)]
-                             {:env (assoc env1 (keyword var) value)})
+     (if-token? x) (lclj-eval (if-branch x env) env)
+     (define-token? x) (let [[_ var exp] x
+                             {value :result env1 :env} (lclj-eval exp env)]
+                         {:env (assoc env1 (keyword var) value)})
      :else (let [[proc-sym & raw-args] x
                  {env1 :env proc :result} (lclj-eval proc-sym env)
                  {env2 :current-env args :args} (reduce (fn [{current-env :current-env args :args} next-arg]
@@ -79,9 +95,11 @@
 
 (parse "(begin (define r 10) (* pi (* r r)))")
 
-(lclj-eval (parse "(begin (define r 10))"))
+(:result (lclj-eval (parse "(begin (+ 1 10))")))
+
+(:result (lclj-eval (parse "(begin (define r 10))")))
 
 (:result (lclj-eval (parse "(begin (define r 10) (* pi (* r r)))")))
 
-(:result (lclj-eval (parse "(+ 1 10)")))
-(lclj-eval (parse "(define r 10)"))
+;; (:result (lclj-eval (parse "(+ 1 10)")))
+;; (lclj-eval (parse "(define r 10)"))
