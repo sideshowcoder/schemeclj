@@ -54,6 +54,7 @@
   {:+ +
    :* *
    :> >
+   := =
    :pi java.lang.Math/PI
    :begin identity-nil})
 
@@ -66,11 +67,28 @@
 (defn if-branch
   [x env]
   (let [[_ test t-branch f-branch] x]
-    (if (lclj-eval test env) t-branch f-branch)))
+    (if (:result (lclj-eval test env)) t-branch f-branch)))
 
 (defn define-token?
   [x]
   (= 'define (first x)))
+
+(defn defint-in-env
+  [x env]
+  (let [[_ var exp] x
+        {value :result env1 :env} (lclj-eval exp env)]
+    {:env (assoc env1 (keyword var) value)}))
+
+(defn lclj-fn-call
+  [x env]
+  (let [[proc-sym & raw-args] x
+        {env1 :env proc :result} (lclj-eval proc-sym env)
+        {env2 :current-env args :args} (reduce (fn [{current-env :current-env args :args} next-arg]
+                                                 (let [{updated-env :env eval-arg :result} (lclj-eval next-arg current-env)]
+                                                   {:current-env updated-env :args (if (nil? eval-arg) args (conj args eval-arg))}))
+                                               {:current-env env1 :args []}
+                                               raw-args)]
+    {:env env2 :result (apply proc args)}))
 
 (defn lclj-eval
   "Eval a expression X in the context of environment ENV, defaults to
@@ -81,25 +99,16 @@
      (symbol? x) {:result ((keyword x) env) :env env}
      (number? x) {:result x :env env}
      (if-token? x) (lclj-eval (if-branch x env) env)
-     (define-token? x) (let [[_ var exp] x
-                             {value :result env1 :env} (lclj-eval exp env)]
-                         {:env (assoc env1 (keyword var) value)})
-     :else (let [[proc-sym & raw-args] x
-                 {env1 :env proc :result} (lclj-eval proc-sym env)
-                 {env2 :current-env args :args} (reduce (fn [{current-env :current-env args :args} next-arg]
-                                                             (let [{updated-env :env eval-arg :result} (lclj-eval next-arg current-env)]
-                                                               {:current-env updated-env :args (if (nil? eval-arg) args (conj args eval-arg))}))
-                                                           {:current-env env1 :args []}
-                                                           raw-args)]
-             {:env env2 :result (apply proc args)}))))
+     (define-token? x) (defint-in-env x env)
+     :else (lclj-fn-call x env))))
 
-(parse "(begin (define r 10) (* pi (* r r)))")
+(defn lclj-rep
+  "Read Eval Print, but no loop"
+  [exp]
+  (-> exp
+      parse
+      lclj-eval
+      :result))
 
-(:result (lclj-eval (parse "(begin (+ 1 10))")))
-
-(:result (lclj-eval (parse "(begin (define r 10))")))
-
-(:result (lclj-eval (parse "(begin (define r 10) (* pi (* r r)))")))
-
-;; (:result (lclj-eval (parse "(+ 1 10)")))
-;; (lclj-eval (parse "(define r 10)"))
+(lclj-rep "(begin (define r 10) (* pi (* r r)))")
+(lclj-rep "(begin (if (= 1 0) 1 10))")
