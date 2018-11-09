@@ -1,1 +1,2 @@
-{:paths ["src" "test"]}
+{:paths ["src" "test"]
+ :deps {org.clojure/core.match {:mvn/version "0.3.0-alpha5"}}}

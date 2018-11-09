@@ -1,6 +1,6 @@
 (ns lispclj.core
-  (:require [clojure.string :as s]))
-
+  (:require [clojure.string :as s]
+            [clojure.core.match :refer [match]]))
 
 (defn tokenize
   "Split a INPUT string in scheme compatible tokens."
@@ -97,10 +97,10 @@
 
 (defn lclj-fn
   [[_ params body] env]
-  ;; Define a function which when called takes and environment, assocs params with the env
-  ;; evals the function in the assoced environment
-  ;; returns the result, without modifying the environment
-  )
+  (let [keyword-params (map keyword params)]
+    (fn [& args]
+      (let [fn-env (into env (map vector keyword-params args))]
+        (:result (lclj-eval body fn-env))))))
 
 (defn lclj-eval
   "Eval a expression X in the context of environment ENV, defaults to
@@ -127,4 +127,4 @@
 (lclj-rep "(begin (define r 10) (* pi (* r r)))")
 (lclj-rep "(begin (if (= 1 0) 1 10))")
 (lclj-rep "(begin (quote (the more the merrier the)))")
-(lclj-rep "(begin (define circle-area (lambda (r) (* pi (* r r)))) (circle-area 3))")
+(lclj-rep "(begin (define r 10) (define circle-area (lambda (r) (* pi (* r r)))) (+ r (circle-area 3)))")
