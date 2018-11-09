@@ -73,7 +73,7 @@
   [x]
   (= 'define (first x)))
 
-(defn defint-in-env
+(defn define-in-env
   [x env]
   (let [[_ var exp] x
         {value :result env1 :env} (lclj-eval exp env)]
@@ -90,6 +90,10 @@
                                                raw-args)]
     {:env env2 :result (apply proc args)}))
 
+(defn quote-token?
+  [x]
+  (= 'quote (first x)))
+
 (defn lclj-eval
   "Eval a expression X in the context of environment ENV, defaults to
   base-env."
@@ -99,7 +103,8 @@
      (symbol? x) {:result ((keyword x) env) :env env}
      (number? x) {:result x :env env}
      (if-token? x) (lclj-eval (if-branch x env) env)
-     (define-token? x) (defint-in-env x env)
+     (define-token? x) (define-in-env x env)
+     (quote-token? x) {:env env :result (-> x rest first)}
      :else (lclj-fn-call x env))))
 
 (defn lclj-rep
@@ -112,3 +117,4 @@
 
 (lclj-rep "(begin (define r 10) (* pi (* r r)))")
 (lclj-rep "(begin (if (= 1 0) 1 10))")
+(lclj-rep "(begin (quote (the more the merrier the)))")
