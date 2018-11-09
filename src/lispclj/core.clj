@@ -19,7 +19,6 @@
 
 (defn str->double [n] (safe (Double/parseDouble n)))
 
-
 (defn token->value
   "Parse atom to type."
   [t]
@@ -58,19 +57,11 @@
    :pi java.lang.Math/PI
    :begin identity-nil})
 
-(defn if-token?
-  [x]
-  (= 'if (first x)))
-
 (declare lclj-eval)
 
 (defn if-branch
   [[_ test t-branch f-branch] env]
   (if (:result (lclj-eval test env)) t-branch f-branch))
-
-(defn define-token?
-  [x]
-  (= 'define (first x)))
 
 (defn define-in-env
   [[_ var exp] env]
@@ -87,14 +78,6 @@
                                                raw-args)]
     {:env env2 :result (apply proc args)}))
 
-(defn quote-token?
-  [x]
-  (= 'quote (first x)))
-
-(defn lambda-token?
-  [x]
-  (= 'lambda (first x)))
-
 (defn lclj-fn
   [[_ params body] env]
   (let [keyword-params (map keyword params)]
@@ -107,14 +90,14 @@
   base-env."
   ([x] (lclj-eval x lclj-base-env))
   ([x env]
-   (cond
-     (symbol? x) {:result ((keyword x) env) :env env}
-     (number? x) {:result x :env env}
-     (if-token? x) (lclj-eval (if-branch x env) env)
-     (define-token? x) {:env (define-in-env x env)}
-     (quote-token? x) {:env env :result (-> x rest first)}
-     (lambda-token? x) {:env env :result (lclj-fn x env)}
-     :else (lclj-fn-call x env))))
+   (match [x]
+          [(_ :guard symbol?)] {:result ((keyword x) env) :env env}
+          [(_ :guard number?)] {:result x :env env}
+          [['if _ _ _]] (lclj-eval (if-branch x env) env)
+          [['define _ _]] {:env (define-in-env x env)}
+          [['quote _]] {:env env :result (-> x rest first)}
+          [['lambda _ _]] {:env env :result (lclj-fn x env)}
+          :else (lclj-fn-call x env))))
 
 (defn lclj-rep
   "Read Eval Print, but no loop"
