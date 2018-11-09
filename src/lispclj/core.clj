@@ -97,7 +97,9 @@
 
 (defn lclj-fn
   [[_ params body] env]
-  ;; Define a function which takes
+  ;; Define a function which when called takes and environment, assocs params with the env
+  ;; evals the function in the assoced environment
+  ;; returns the result, without modifying the environment
   )
 
 (defn lclj-eval
