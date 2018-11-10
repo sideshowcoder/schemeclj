@@ -106,8 +106,3 @@
       parse
       lclj-eval
       :result))
-
-(lclj-rep "(begin (define r 10) (* pi (* r r)))")
-(lclj-rep "(begin (if (= 1 0) 1 10))")
-(lclj-rep "(begin (quote (the more the merrier the)))")
-(lclj-rep "(begin (define r 10) (define circle-area (lambda (r) (* pi (* r r)))) (+ r (circle-area 3)))")
