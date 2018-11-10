@@ -108,3 +108,7 @@
       parse
       lclj-eval
       :result))
+
+
+;; TODO add repl main function to run
+;; TODO README how to run the repl with deps.edn setup?
