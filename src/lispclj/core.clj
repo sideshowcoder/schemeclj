@@ -6,6 +6,7 @@
   "Split a INPUT string in scheme compatible tokens."
   [input]
   (let [split-input (-> input
+                        (s/replace #"\n" " ")
                         (s/replace #"\)" " ) ")
                         (s/replace #"\(" " ( ")
                         (s/split #" "))]
