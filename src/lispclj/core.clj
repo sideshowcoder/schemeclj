@@ -2,6 +2,16 @@
   (:require [clojure.string :as s]
             [clojure.core.match :refer [match]]))
 
+(def lclj-base-env
+  {:+ +
+   :* *
+   :> >
+   := =
+   :pi java.lang.Math/PI
+   :begin identity-nil})
+
+(declare lclj-eval)
+
 (defn tokenize
   "Split a INPUT string in scheme compatible tokens."
   [input]
@@ -50,18 +60,9 @@
   ([] nil)
   ([x] x))
 
-(def lclj-base-env
-  {:+ +
-   :* *
-   :> >
-   := =
-   :pi java.lang.Math/PI
-   :begin identity-nil})
-
-(declare lclj-eval)
-
 (defn if-branch
   [[_ test t-branch f-branch] env]
+  ;; TODO If cannot modify environment, might be a good thing...
   (if (:result (lclj-eval test env)) t-branch f-branch))
 
 (defn define-in-env
