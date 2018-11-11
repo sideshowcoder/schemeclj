@@ -1,0 +1,28 @@
+* Scheme (like) in Clojure
+
+** Why? This seems very useless?
+
+Yes it is! There is no reason besides: Because its fun.
+
+** How do I use this?
+
+With Clojure 1.9.x installed
+
+#+BEGIN_SRC
+clj -i clj -i src/lispclj/core.clj -r
+Clojure 1.9.0
+user=> (require '[lispclj.core :refer :all])
+nil
+user=> (lclj-rep "(begin (+ 1 1))")
+2
+#+END_SRC
+
+* Missing
+
+** TODO Repl - Yes this should be in here by ¯\_(ツ)_/¯
+
+** TODO Main function to use as a Repl
+
+** TODO Proper build to jar
+
+** TODO Docstrings

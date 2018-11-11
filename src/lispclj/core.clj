@@ -2,6 +2,10 @@
   (:require [clojure.string :as s]
             [clojure.core.match :refer [match]]))
 
+(defn identity-nil
+  ([] nil)
+  ([x] x))
+
 (def lclj-base-env
   {:+ +
    :* *
@@ -56,10 +60,6 @@
       (read-tokens)
       first))
 
-(defn identity-nil
-  ([] nil)
-  ([x] x))
-
 (defn if-branch
   [[_ test t-branch f-branch] env]
   ;; TODO If cannot modify environment, might be a good thing...
@@ -108,10 +108,3 @@
       parse
       lclj-eval
       :result))
-
-
-;; TODO add repl main function to run
-;; TODO README how to run the repl with deps.edn setup?
-;; TODO add doc strings where useful
-;; TODO what about clojure doc?
-;; TODO write blogpost
